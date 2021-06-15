@@ -246,9 +246,6 @@ def test(data,
         if save_att_images and batch_i < 3: 
             save_paths = [save_dir / f'images/{Path(path).name}' for path in paths]
             Thread(target=save_images, args=(img, save_paths, shapes)).start() 
-        
-        if batch_i == 9: 
-            break
     
     # Compute statistics
     stats = [np.concatenate(x, 0) for x in zip(*stats)]  # to numpy
