@@ -106,7 +106,7 @@ class D3MI_FGSM(MI_FGSM):
 
 class D23MI_FGSM(MI_FGSM):
     def __init__(self, max_iter=100, epsilon=10/255, momentum=0.9, decay=0.1):
-        super(D2I_FGSM, self).__init__(max_iter, epsilon)
+        super(D23MI_FGSM, self).__init__(max_iter, epsilon)
         self.decay = decay
         sum = 0
         for i in range(max_iter):
