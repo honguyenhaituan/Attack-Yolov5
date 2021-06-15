@@ -375,7 +375,7 @@ if __name__ == '__main__':
     print(opt)
     check_requirements(exclude=('tensorboard', 'thop'))
 
-    wandb_logger = WandbLogger(opt, None, None, opt.max_iter)
+    wandb_logger = WandbLogger(opt, opt.name_attack + " " + str(opt.max_iter), None, opt.max_iter)
     
     if opt.task in ('train', 'val', 'test'):  # run normally
         test(**vars(opt), wandb_logger=wandb_logger)

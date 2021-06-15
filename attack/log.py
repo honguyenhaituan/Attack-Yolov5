@@ -16,7 +16,7 @@ class WandbLogger():
                                         project='YOLOv5' if opt.project == 'runs/train' else Path(opt.project).stem,
                                         name=name,
                                         id=run_id) if not wandb.run else wandb.run
-        self.log_imgs = 16
+        self.log_imgs = 100
         self.current_epoch = 0
         self.epoch_dict = [{} for _ in range(epoch)]
 
