@@ -51,6 +51,7 @@ def test(data,
          epsilon=10/255,
          momentum=0.9,
          decay=0.9,
+         no_blur=False,
          wandb_logger=None,
          compute_loss=None,
          ):
@@ -128,7 +129,7 @@ def test(data,
         t0 += time_synchronized() - t
 
         #Attack image
-        # img = attack_images(model, img, targets, method_attack, wandb_logger).detach()
+        img = attack_images(model, img, targets, method_attack, wandb_logger, no_blur).detach()
 
         # Run model
         t = time_synchronized()
@@ -363,6 +364,7 @@ if __name__ == '__main__':
     parser.add_argument('--epsilon', type=float, default=10/255, help='Max value per pixel change')
     parser.add_argument('--momentum', type=float, default=0.9, help='Momentum gradient attack')
     parser.add_argument('--decay', type=float, default=0.9, help='Decay alpha attack')
+    parser.add_argument('--no-blur', action='store_true', help='turn off blur object previous attack')
 
     opt = parser.parse_args()
     opt.save_json |= opt.data.endswith('coco.yaml')

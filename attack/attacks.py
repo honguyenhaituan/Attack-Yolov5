@@ -11,6 +11,10 @@ class I_FGSM:
         self.epsilon = epsilon
         self.alpha = self.epsilon / self.max_iter
         self.grad = None
+        self.iter = 0
+
+    def refresh(self):
+        self.iter = 0
 
     def get_max_iter(self): 
         return self.max_iter
@@ -18,7 +22,8 @@ class I_FGSM:
     def _update_grad(self, grad): 
         self.grad = grad
 
-    def get_update_image(self, grad): 
+    def get_update_image(self, grad):
+        self.iter += 1
         self._update_grad(grad)
         return self.alpha * torch.sign(self.grad)
 
@@ -42,8 +47,8 @@ class DMI_FGSM(MI_FGSM):
         else: 
             self.factor = self.epsilon / max_iter
 
-    def get_update_image(self, i, grad):
-        self.momentum = self.factor * (self.decay ** i)
+    def get_update_image(self, grad):
+        self.momentum = self.factor * (self.decay ** self.iter)
         return super().get_update_image(grad)
 
 class D2MI_FGSM(MI_FGSM):
@@ -54,11 +59,10 @@ class D2MI_FGSM(MI_FGSM):
         for i in range(max_iter):
             sum += 1 / (1 + decay * i)
         self.factor = epsilon / sum
-        self.iter = 0
         self.alpha = self.factor / (1 + decay * self.iter)
         
-    def get_update_image(self, i, grad):
-        self.alpha = self.factor / (1 + self.decay * i)
+    def get_update_image(self, grad):
+        self.alpha = self.factor / (1 + self.decay * self.iter)
         return super().get_update_image(grad)
 
 class D3MI_FGSM(MI_FGSM):
@@ -66,8 +70,8 @@ class D3MI_FGSM(MI_FGSM):
         super(D3MI_FGSM, self).__init__(max_iter, epsilon, momentum)
         self.momentum0 = momentum
 
-    def get_update_image(self, i, grad):
-        p_i = (self.max_iter - i) / self.max_iter
+    def get_update_image(self, grad):
+        p_i = (self.max_iter - self.iter) / self.max_iter
         self.momentum = self.momentum0 * (p_i / (1 - self.momentum0 + self.momentum0 * p_i))
         return super().get_update_image(grad)
 
@@ -79,17 +83,24 @@ def get_method_attack(name_attack, max_iter, epsilon, momentum, decay):
 
     return None
 
-def attack_images(model, img, targets, method_attack, logger):
+def attack_images(model, img, targets, method_attack, logger, no_blur=False):
     compute_loss = ComputeLoss(model)
 
     t = time_synchronized()
-    att_img, masks = blur_image(img, targets)
+    if no_blur:
+        att_img = img.clone()
+        bs, _, h, w = att_img.shape
+        masks = torch.zeros((bs, h, w), dtype=torch.bool)
+    else: 
+        att_img, masks = blur_image(img, targets)
+
     att_img.requires_grad = True
     time_process = time_synchronized() - t
     
     if logger:
         logger.increase_log({"time/process_attack":time_process})
 
+    method_attack.refresh()
     for i in range(method_attack.get_max_iter()):
         t = time_synchronized()
 
@@ -99,7 +110,7 @@ def attack_images(model, img, targets, method_attack, logger):
             loss, _ = compute_loss(train_out, targets)
         loss.backward()
 
-        updates_image = method_attack.get_update_image(i, att_img.grad)
+        updates_image = method_attack.get_update_image(att_img.grad)
         for update_image, mask in zip(updates_image, masks):
             update_image[:, mask] = 0
 
