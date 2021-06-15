@@ -1,3 +1,4 @@
+from os import name
 import torch
 from utils.loss import ComputeLoss
 from utils.torch_utils import time_synchronized
@@ -62,12 +63,60 @@ class D2MI_FGSM(MI_FGSM):
         self.alpha = self.factor / (1 + self.decay * self.iter)
         return super().get_update_image(grad)
 
+class D12MI_FGSM(MI_FGSM):
+    def __init__(self, max_iter=100, epsilon=10/255, momentum=0.9, decay=0.1):
+        super(D12MI_FGSM, self).__init__(max_iter, epsilon, momentum)
+        self.decay = decay
+        sum = 0
+        for i in range(max_iter):
+            sum += 1 / (1 + decay * i)
+        self.factor = epsilon / sum
+        self.alpha = self.factor / (1 + decay * self.iter)
+        self.momentum0 = momentum
+
+    def get_update_image(self, grad):
+        self.alpha = self.factor / (1 + self.decay * self.iter)
+        self.momentum = self.momentum0 * (1 - self.iter/self.max_iter)
+        return super().get_update_image(grad)
+
+
+class D2I_FGSM(I_FGSM):
+    def __init__(self, max_iter=100, epsilon=10/255, decay=0.1):
+        super(D2I_FGSM, self).__init__(max_iter, epsilon)
+        self.decay = decay
+        sum = 0
+        for i in range(max_iter):
+            sum += 1 / (1 + decay * i)
+        self.factor = epsilon / sum
+        self.alpha = self.factor / (1 + decay * self.iter)
+        
+    def get_update_image(self, grad):
+        self.alpha = self.factor / (1 + self.decay * self.iter)
+        return super().get_update_image(grad)
+
 class D3MI_FGSM(MI_FGSM):
     def __init__(self, max_iter=100, epsilon=10/255, momentum=0.9):
         super(D3MI_FGSM, self).__init__(max_iter, epsilon, momentum)
         self.momentum0 = momentum
 
     def get_update_image(self, grad):
+        p_i = (self.max_iter - self.iter) / self.max_iter
+        self.momentum = self.momentum0 * (p_i / (1 - self.momentum0 + self.momentum0 * p_i))
+        return super().get_update_image(grad)
+
+class D23MI_FGSM(MI_FGSM):
+    def __init__(self, max_iter=100, epsilon=10/255, momentum=0.9, decay=0.1):
+        super(D2I_FGSM, self).__init__(max_iter, epsilon)
+        self.decay = decay
+        sum = 0
+        for i in range(max_iter):
+            sum += 1 / (1 + decay * i)
+        self.factor = epsilon / sum
+        self.alpha = self.factor / (1 + decay * self.iter)
+        self.momentum0 = momentum
+        
+    def get_update_image(self, grad):
+        self.alpha = self.factor / (1 + self.decay * self.iter)
         p_i = (self.max_iter - self.iter) / self.max_iter
         self.momentum = self.momentum0 * (p_i / (1 - self.momentum0 + self.momentum0 * p_i))
         return super().get_update_image(grad)
@@ -79,10 +128,16 @@ def get_method_attack(name_attack, max_iter, epsilon, momentum, decay):
         return MI_FGSM(max_iter, epsilon, momentum)
     if name_attack == 'DMI-FGSM':
         return DMI_FGSM(max_iter, epsilon, momentum)
+    if name_attack == 'D2I-FGSM':
+        return D2I_FGSM(max_iter, epsilon, decay)
     if name_attack == 'D2MI-FGSM':
         return D2MI_FGSM(max_iter, epsilon, momentum, decay)
+    if name_attack == 'D12MI-FGSM':
+        return D12MI_FGSM(max_iter, epsilon, momentum, decay)
     if name_attack == 'D3MI-FGSM':
         return D3MI_FGSM(max_iter, epsilon, momentum)
+    if name_attack == 'D23MI-FGSM':
+        return D23MI_FGSM(max_iter, epsilon, momentum, decay)
 
     return None
 
