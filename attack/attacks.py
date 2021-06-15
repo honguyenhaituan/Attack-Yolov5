@@ -40,16 +40,12 @@ class MI_FGSM(I_FGSM):
         self.grad = self.momentum * self.grad + grad / torch.sum(torch.abs(grad))
 
 class DMI_FGSM(MI_FGSM):
-    def __init__(self, max_iter=100, epsilon=10/255, momentum=0.9, decay=0.95):
+    def __init__(self, max_iter=100, epsilon=10/255, momentum=0.9):
         super(DMI_FGSM, self).__init__(max_iter, epsilon, momentum)
-        self.decay = decay
-        if decay != 1: 
-            self.factor = self.epsilon * (1 - decay) / (1 - decay ** max_iter)
-        else: 
-            self.factor = self.epsilon / max_iter
+        self.momentum0 = momentum
 
     def get_update_image(self, grad):
-        self.momentum = self.factor * (self.decay ** self.iter)
+        self.momentum = self.momentum0 * (1 - self.iter/self.max_iter)
         return super().get_update_image(grad)
 
 class D2MI_FGSM(MI_FGSM):
@@ -81,6 +77,12 @@ def get_method_attack(name_attack, max_iter, epsilon, momentum, decay):
         return I_FGSM(max_iter, epsilon)
     if name_attack == 'MI-FGSM':
         return MI_FGSM(max_iter, epsilon, momentum)
+    if name_attack == 'DMI-FGSM':
+        return DMI_FGSM(max_iter, epsilon, momentum)
+    if name_attack == 'D2MI-FGSM':
+        return D2MI_FGSM(max_iter, epsilon, momentum, decay)
+    if name_attack == 'D3MI-FGSM':
+        return D3MI_FGSM(max_iter, epsilon, momentum)
 
     return None
 

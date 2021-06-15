@@ -247,7 +247,8 @@ def test(data,
             save_paths = [save_dir / f'images/{Path(path).name}' for path in paths]
             Thread(target=save_images, args=(img, save_paths, shapes)).start() 
         
-        break
+        if batch_i == 9: 
+            break
     
     # Compute statistics
     stats = [np.concatenate(x, 0) for x in zip(*stats)]  # to numpy
@@ -363,7 +364,7 @@ if __name__ == '__main__':
     parser.add_argument('--max-iter', type=int, default=100, help='iter attack')
     parser.add_argument('--epsilon', type=float, default=10, help='Max value per pixel change')
     parser.add_argument('--momentum', type=float, default=0.9, help='Momentum gradient attack')
-    parser.add_argument('--decay', type=float, default=0.9, help='Decay alpha attack')
+    parser.add_argument('--decay', type=float, default=0.1, help='Decay alpha attack')
     parser.add_argument('--no-blur', action='store_true', help='turn off blur object previous attack')
 
     opt = parser.parse_args()
