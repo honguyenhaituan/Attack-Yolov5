@@ -15,6 +15,7 @@ class I_FGSM:
 
     def refresh(self):
         self.iter = 0
+        self.grad = None
 
     def get_max_iter(self): 
         return self.max_iter
@@ -82,7 +83,7 @@ def get_method_attack(name_attack, max_iter, epsilon, momentum, decay):
         return MI_FGSM(max_iter, epsilon, momentum)
 
     return None
-    
+
 @torch.no_grad()
 def attack_images(model, img, targets, method_attack, logger, no_blur=False):
     compute_loss = ComputeLoss(model)

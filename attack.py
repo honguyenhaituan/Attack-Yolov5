@@ -361,7 +361,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--name-attack', type=str, default='MI-FGSM', help='name method attack model')
     parser.add_argument('--max-iter', type=int, default=100, help='iter attack')
-    parser.add_argument('--epsilon', type=float, default=10/255, help='Max value per pixel change')
+    parser.add_argument('--epsilon', type=float, default=10, help='Max value per pixel change')
     parser.add_argument('--momentum', type=float, default=0.9, help='Momentum gradient attack')
     parser.add_argument('--decay', type=float, default=0.9, help='Decay alpha attack')
     parser.add_argument('--no-blur', action='store_true', help='turn off blur object previous attack')
@@ -370,6 +370,7 @@ if __name__ == '__main__':
     opt.save_json |= opt.data.endswith('coco.yaml')
     opt.save_txt |= opt.save_hybrid
     opt.data = check_file(opt.data)  # check file
+    opt.epsilon /= 255
     print(opt)
     check_requirements(exclude=('tensorboard', 'thop'))
 
